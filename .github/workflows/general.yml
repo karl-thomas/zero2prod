@@ -5,8 +5,8 @@ on: [push, pull_request]
 env:
   CARGO_TERM_COLOR: always
   SQLX_VERSION: 0.7.1
-  SQLX_FEATURES: "rustls,postgres"
-
+  SQLX_FEATURES: "postgres"
+  DATABASE_URL: "postgres://postgres:password@localhost:5432/newsletter"
 jobs:
   test:
     name: Test
@@ -38,9 +38,11 @@ jobs:
       - name: Install postgresql-client
         run: sudo apt-get update && sudo apt-get install postgresql-client -y
 
-      - name: Migrate database
-        run: SKIP_DOCKER=true ./scripts/init_db.sh
-
+      - name: Migrate database and run tests
+        run: SKIP_DOCKER=true ./scripts/init_db.sh && echo "DATABASE_URL=$DATABASE_URL" >> "$GITHUB_ENV"
+      - name: Debug db uri
+        run: |
+          printf '%s\n' "$DATABASE_URL"
       - name: Run tests
         run: cargo test
 
@@ -85,7 +87,7 @@ jobs:
       - name: Install postgresql-client
         run: sudo apt-get update && sudo apt-get install postgresql-client -y
       - name: Migrate database
-        run: SKIP_DOCKER=true ./scripts/init_db.sh
+        run: SKIP_DOCKER=true ./scripts/init_db.sh && echo "DATABASE_URL="$DATABASE_URL >> "$GITHUB_ENV"
       - name: Linting
         run: cargo clippy -- -D warnings
 
